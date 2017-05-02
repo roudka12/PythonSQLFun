@@ -1,0 +1,285 @@
+#
+# Example of connecting to a database in Python and running a query
+# 
+#
+
+import mysql.connector
+from mysql.connector import errorcode
+
+#cnx = mysql.connector.connect(host='10.104.251.10', user='roudka12', database='KRIMDB', password='Kelly')
+#cursor = cnx.cursor()
+
+print "Welcome to The MOVIE DATABASE!"
+
+##################################################################################################################################################
+def prompUser(cxn):
+    userInteracting = True
+    while userInteracting == True:
+        leInput = raw_input("\n\nWelcome to the USER INTERFACE.\nChoose a category or type 'back' to go back to the previous screen.\nMovies (0)\nDirectors (1)\nActors (2)\n\n")
+        if leInput == "0":
+            moviesInteracting = True
+            while moviesInteracting == True:
+                le2Input = raw_input("\n\nChoose an action or type 'back' to go back to the previous screen.\nShow me all movies (0)\nShow me Movies by Age-Rating (1)\nSearch by Genre (2)\nTell me a Movie's director (3)\nWhat Movie was given the highest Rating by Film Critics? (4)\n\n")
+                if le2Input == "0":
+                    showMeMovies(cnx)
+                elif le2Input == "1":
+                    showMeMoviesRated(cnx)
+                elif le2Input == "2":
+                    showMeAllGenres(cnx)
+                    showMeMoviesByGenre(cnx)
+                elif le2Input == "3":
+                    getDirectorFromMovie(cnx)
+                elif le2Input == "4":
+                    getHighestRatedMovie(cnx)
+                elif le2Input == "back":
+                    moviesInteracting = False
+                    
+        elif leInput == "1":
+            directorInteracting = True
+            while directorInteracting == True:
+                dirInput = raw_input("\n\nChoose an action or type 'back' to return to the previous screen.\nShow me all Directors (0)\nShow me Movies directed by _____ (1)\n\n")
+                if dirInput == "0":
+                    showMeDirectors(cnx)
+                elif dirInput == "1":
+                    showMeMoviesByDirector(cnx)
+                elif dirInput == "back":
+                    directorInteracting = False
+                    
+        elif leInput == "2":
+            actorInteracting = True
+            while actorInteracting == True:
+                actorInput = raw_input("\n\nChoose an action of type 'back' to return to the previous screen.\nShow me all Actors  (0)\nShow me movies that an Actor has stared in (1)\nShow me an Actor's best Rated Film (2)\n\n")
+                if actorInput == "0":
+                    showMeActors(cnx)
+                elif actorInput == "1":
+                    getMoviesWithActor(cnx)
+                elif actorInput == "2":
+                    showMeActorsBestRatedFilm(cnx)
+                elif actorInput == "back":
+                    actorInteracting = False 
+        elif leInput == "back":
+            userInteracting = False
+
+
+################################################################################################################################
+def showMeMovies( cnx):
+    cursor = cnx.cursor()
+
+    query =(" select movieId, movieTitle from movie")
+    cursor.execute(query)
+    print("#################################################################")
+    print("\nHere are all the Movies in this Database:\n")
+    for (movieId, movieTitle) in cursor:
+      print("{}, {} ".format( movieId, movieTitle ))
+    print("\n###############################################################\n")
+
+    cursor.close()
+
+
+
+
+
+################################################################################################################################
+def showMeMoviesByDirector( cnx):
+    cursor = cnx.cursor()
+    print("\n###############################################################\n")
+
+    user_input = raw_input("What is your Director's last name? ")
+
+#presentSQL = ("   SELECT ClothingID FROM Clothing WHERE ClothingID = " + str(clothingID) + ";")
+    query = ("select movieTitle from movie,director where movie.directorID = director.directorID and directorLast = '" + str(user_input) + "';")
+    cursor.execute(query)
+
+    for(movieTitle) in cursor:
+        print("{}".format(movieTitle) )
+    print("\n################################################################\n")
+
+    cursor.close()
+
+
+
+
+    
+#################################################################################################################################
+def getDirectorFromMovie(cnx):
+    cursor = cnx.cursor()
+    print("\n###############################################################\n")
+
+    user_input = raw_input("Which Movie would you like to see the Director of? ")
+
+    query = ("select directorFirst, directorLast from movie,director where movie.directorID = director.directorID and movieTitle = '" + str(user_input) + "';")
+    cursor.execute(query)
+
+    for(directorFirst, directorLast) in cursor:
+        print("{} {}".format(directorFirst, directorLast) )
+    print("\n################################################################\n")
+
+    cursor.close()
+
+
+
+
+#################################################################################################################################
+def getMoviesWithActor(cnx):
+    cursor = cnx.cursor()
+    print("\n###############################################################\n")
+
+    user_input = raw_input("Which Actor would you like to see the Movies of? Enter the Actor's last name \n")
+
+    query = ("select movieTitle from movie, actor, actsIn where movie.movieID = actsIn.movieID and actsIn.actorID = actor.actorID and actorLast = '" + str(user_input) + "';")
+    #print(query)
+    cursor.execute(query)
+
+    for(movieTitle) in cursor:
+        print("{}".format(movieTitle) )
+    print("\n################################################################\n")
+
+    cursor.close()
+
+
+
+    
+#################################################################################################################################
+def showMeMoviesRated(cnx):
+    cursor = cnx.cursor()
+    print("\n###############################################################\n")
+
+    user_input = raw_input("Show me Movies by Rating: Type G, PG, PG-13, or R \n")
+
+    query = ("select movieTitle from movie where rating = '" + str(user_input) + "';")
+    cursor.execute(query)
+
+    for(movieTitle) in cursor:
+        print("{}".format(movieTitle) )
+    print("\n################################################################\n")
+
+    cursor.close()
+
+
+
+    
+#################################################################################################################################
+def getHighestRatedMovie(cnx):
+    cursor = cnx.cursor()
+    print("\n###############################################################\n")
+
+    print("The Highest Rated Movie by Critics in this Database is: \n")
+
+    query = ("select movieTitle from movie where IMDBScore = (select max(IMDBScore) from movie)")
+    cursor.execute(query)
+
+    for(movieTitle) in cursor:
+        print("{}".format(movieTitle) )
+    print("\n################################################################\n")
+
+    cursor.close()
+
+
+
+    
+#################################################################################################################################
+def showMeActorsBestRatedFilm(cnx):
+    cursor = cnx.cursor()
+    print("\n###############################################################\n")
+
+    user_input = raw_input("Which Actor would you like to know about? Enter the Actor's last name \n")
+
+    query = ("select movieTitle from movie, actor, actsIn \
+                where movie.movieID = actsIn.movieID and actsIn.actorID = actor.actorID and actorLast = '" + str(user_input) + "' \
+                and IMDBScore = (select max(IMDBScore) from movie, actor, actsIn where movie.movieID = actsIn.movieID and actsIn.actorID = actor.actorID and actorLast = '" + str(user_input) + "' );")
+    #print(query)
+    cursor.execute(query)
+
+    for(movieTitle) in cursor:
+        print("This Actor's Highest Rated Film is \n{}".format(movieTitle) )
+    print("\n################################################################\n")
+
+    cursor.close()
+
+
+
+
+#################################################################################################################################
+def showMeDirectors( cnx):
+    cursor = cnx.cursor()
+
+    query =(" select directorFirst, directorLast from director;")
+    cursor.execute(query)
+    print("#################################################################")
+    print("\nHere are all the Directors in this Database:\n")
+    for (directorFirst, directorLast) in cursor:
+      print("{} {} ".format( directorFirst, directorLast))
+    print("\n###############################################################\n")
+
+    cursor.close()
+
+
+
+##################################################################################################################################
+def showMeActors( cnx):
+    cursor = cnx.cursor()
+
+    query =(" select actorFirst, actorLast from actor;")
+    cursor.execute(query)
+    print("#################################################################")
+    print("\nHere are all the Actors in this Database:\n")
+    for (actorFirst, actorLast) in cursor:
+      print("{} {} ".format( actorFirst, actorLast))
+    print("\n###############################################################\n")
+
+    cursor.close()
+
+
+
+
+####################################################################################################################################
+def showMeMoviesByGenre(cnx):
+    cursor = cnx.cursor()
+    print("\n###############################################################\n")
+     
+    user_input = raw_input("Type the Genre of movie you are interested in  \n")
+
+    query = ("select movieTitle from movie, genre where movie.genreID = genre.genreID and genre.genreName = '" + str(user_input) + "';")
+    cursor.execute(query)
+
+    print("All " + str(user_input) + " Movies in this database are: \n\n")
+    for(movieTitle) in cursor:
+          print("{}".format(movieTitle) )
+
+    print("\n################################################################\n")
+
+    cursor.close()
+
+
+
+#####################################################################################################################################
+def showMeAllGenres(cnx):
+    cursor = cnx.cursor()
+    print("Here are all the Genres in the Database\n")
+
+    query = ("select genreName from genre ;")
+    cursor.execute(query)
+    for(genreName) in cursor:
+       print("{}".format(genreName) )
+    print("\n")
+    cursor.close
+
+
+
+######################################################################################################################################
+try:    
+    cnx = mysql.connector.connect(host='10.104.251.10', user='roudka12', database='KRIMDB', password='Kelly')
+    appRunning = True
+    while appRunning == True:
+        userInput = raw_input("\nWelcome to the MAIN SCREEN.\nPlease press 0 to enter Menu or type 'exit' to exit: \n")
+        if userInput == "0":
+            prompUser(cnx)
+        elif str(userInput) == "exit":
+            appRunning = False;
+        else:
+            print("\nIncorrect Input")
+except mysql.connector.Error as err:
+    print("Something went wrong: {}".format(err))
+else:
+    connection.close()
+ 
